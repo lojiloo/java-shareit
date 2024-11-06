@@ -26,31 +26,30 @@ public class ItemServiceImpl implements ItemService {
     private final UserStorage userStorage;
 
     @Override
-    public Item addNewItem(CreateItemRequest request, long userId) {
+    public ItemDto addNewItem(CreateItemRequest request, long userId) {
         Item item = modelMapper.map(request, Item.class);
 
-        if (userStorage.contains(userId)) {
-            item.setOwner(userId);
-            return itemStorage.addNewItem(item);
+        if (!userStorage.contains(userId)) {
+            throw new NotFoundException("Пользователь с таким id не найден");
         }
-
-        throw new NotFoundException("Пользователь с таким id не найден");
+        item.setOwner(userId);
+        return modelMapper.map(itemStorage.addNewItem(item), ItemDto.class);
     }
 
     @Override
-    public Item updateItem(UpdateItemRequest request, long itemId, long userId) {
+    public ItemDto updateItem(UpdateItemRequest request, long itemId, long userId) {
         if (!itemStorage.contains(itemId)) {
             throw new NotFoundException("Запрашиваемая вещь не была найдена");
         }
 
-        if (userId == itemStorage.getItemById(itemId).getOwner()) {
-            Item item = modelMapper.map(request, Item.class);
-            item.setId(itemId);
-            item.setOwner(userId);
-
-            return itemStorage.updateItem(item);
+        if (userId != itemStorage.getItemById(itemId).getOwner()) {
+            throw new ForbiddenException("Внесение изменений доступно только владельцу");
         }
-        throw new ForbiddenException("Внесение изменений доступно только владельцу");
+        Item item = modelMapper.map(request, Item.class);
+        item.setId(itemId);
+        item.setOwner(userId);
+
+        return modelMapper.map(itemStorage.updateItem(item), ItemDto.class);
     }
 
     @Override
@@ -58,7 +57,6 @@ public class ItemServiceImpl implements ItemService {
         if (!itemStorage.contains(itemId)) {
             throw new NotFoundException("Запрашиваемая вещь не была найдена");
         }
-
         Item item = itemStorage.getItemById(itemId);
 
         return modelMapper.map(item, ItemDto.class);

@@ -21,13 +21,13 @@ public class ItemController {
     private final ItemServiceImpl itemService;
 
     @PostMapping
-    public Item addNewItem(@RequestBody @Valid CreateItemRequest request,
+    public ItemDto addNewItem(@RequestBody @Valid CreateItemRequest request,
                            @RequestHeader("X-Sharer-User-Id") long ownerId) {
         return itemService.addNewItem(request, ownerId);
     }
 
     @PatchMapping("/{itemId}")
-    public Item updateItem(@RequestBody @Valid UpdateItemRequest request,
+    public ItemDto updateItem(@RequestBody @Valid UpdateItemRequest request,
                            @PathVariable Long itemId,
                            @RequestHeader("X-Sharer-User-Id") long userId) {
         return itemService.updateItem(request, itemId, userId);
