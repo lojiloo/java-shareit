@@ -70,7 +70,7 @@ public class InMemoryUserStorage implements UserStorage {
     public void validateUpdatedUser(User user) {
         String email = user.getEmail();
         for (User u : users.values()) {
-            if (u.getEmail().equals(email) && u.getId() != user.getId()) {
+            if (u.getEmail().equals(email) && !u.getId().equals(user.getId())) {
                 throw new ConflictException("Данный email уже занят другим пользователем");
             }
         }
