@@ -1,22 +1,25 @@
 package ru.practicum.shareit.item.dao;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface ItemStorage {
+public interface ItemStorage extends JpaRepository<Item, Long> {
 
-    Item addNewItem(Item item);
+    Optional<List<Item>> findByOwner(long owner);
 
-    Item updateItem(Item item);
+    @Query("select i.id from Item i where i.owner = :ownerId")
+    List<Long> findItemIdByOwnerId(long ownerId);
 
-    Item getItemById(long itemId);
+    @Query("select i from Item i " +
+            "where upper(i.name) like upper(concat('%', :text, '%')) " +
+            "   or upper(i.description) like upper(concat('%', :text, '%'))")
+    Optional<List<Item>> findByNameOrDescriptionContainingIgnoreCase(String text);
 
-    List<Item> getAllItemsOfUser(long ownerId);
+    @Query("select i.owner from Item i where i.id = :itemId")
+    Long findOwnerIdByItemId(long itemId);
 
-    List<Item> searchItem(String text);
-
-    boolean contains(Item item);
-
-    boolean contains(long itemId);
 }

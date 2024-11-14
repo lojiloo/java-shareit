@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UpdateUserRequest;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserServiceImpl;
 
 import java.util.List;
@@ -21,13 +20,13 @@ public class UserController {
     private final UserServiceImpl userService;
 
     @PostMapping
-    public User createUser(@RequestBody @Valid CreateUserRequest request) {
+    public UserDto createUser(@RequestBody @Valid CreateUserRequest request) {
         return userService.createUser(request);
     }
 
     @PatchMapping("/{userId}")
-    public User updateUser(@RequestBody @Valid UpdateUserRequest request,
-                           @PathVariable long userId) {
+    public UserDto updateUser(@RequestBody @Valid UpdateUserRequest request,
+                              @PathVariable long userId) {
         return userService.updateUser(request, userId);
     }
 
