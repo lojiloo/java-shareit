@@ -17,9 +17,9 @@ public interface ItemService {
 
     ItemDto updateItem(UpdateItemRequest request, long itemId, long userId);
 
-    ItemDtoWithBookings getItemDtoById(Long itemId);
+    ItemDtoWithBookings getItemById(Long itemId);
 
-    List<ItemDtoWithBookings> getAllItemsDtoOfUser(long ownerId);
+    List<ItemDtoWithBookings> getAllItemsOfUser(long ownerId);
 
     List<ItemDto> searchItem(String text);
 

@@ -31,13 +31,13 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public UserDto getUserDtoById(@PathVariable long userId) {
-        return userService.getUserDtoById(userId);
+    public UserDto getUserById(@PathVariable long userId) {
+        return userService.getUserById(userId);
     }
 
     @GetMapping
-    public List<UserDto> getAllDtos() {
-        return userService.getAllDtos();
+    public List<UserDto> getAllUsers() {
+        return userService.getAllUsers();
     }
 
     @DeleteMapping("/{userId}")

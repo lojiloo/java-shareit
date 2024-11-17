@@ -23,6 +23,7 @@ import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public CommentDto addNewComment(CreateCommentRequest request, long itemId, long userId) {
-        if (!bookingStorage.findItemIdByBookerId(userId).contains(itemId)) {
+        if (!bookingStorage.existsItemIdByBookerId(userId)) {
             throw new BadRequestException("Оставить комментарий можно на ранее арендованную вещь");
         }
 
@@ -93,7 +94,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDtoWithBookings getItemDtoById(Long itemId) {
+    public ItemDtoWithBookings getItemById(Long itemId) {
         Item item = itemStorage.findById(itemId).orElseThrow(
                 () -> new NotFoundException("Запрашиваемая вещь не была найдена")
         );
@@ -113,38 +114,53 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDtoWithBookings> getAllItemsDtoOfUser(long ownerId) {
+    public List<ItemDtoWithBookings> getAllItemsOfUser(long ownerId) {
+        List<Item> items = itemStorage.findByOwner(ownerId);
+        if (items.isEmpty()) {
+            throw new NotFoundException("У вас ещё не создано ни одного предложения для аренды");
+        }
+
+        List<Long> itemIds = new ArrayList<>();
+        for (Item item : items) {
+            itemIds.add(item.getId());
+        }
         LocalDateTime now = LocalDateTime.now();
 
-        List<Item> items = itemStorage.findByOwner(ownerId).orElseThrow(
-                () -> new NotFoundException("У вас ещё не создано ни одного предложения для аренды")
-        );
+        List<Booking> lastBookings = bookingStorage.findLastBookings(itemIds, now);
+        List<Booking> nextBookings = bookingStorage.findNextBookings(itemIds, now);
+        List<Comment> comments = commentStorage.findByItemIdIn(itemIds);
 
         List<ItemDtoWithBookings> dtos = new ArrayList<>();
-
         for (Item item : items) {
-            ItemDtoWithBookings dtoWithBookings = modelMapper.map(item, ItemDtoWithBookings.class);
+            dtos.add(modelMapper.map(item, ItemDtoWithBookings.class));
+        }
 
-            List<Booking> lastBookings = bookingStorage.findLastBookings(item.getId(), now);
-            if (!lastBookings.isEmpty()) {
-                dtoWithBookings.setLastBooking(modelMapper.map(lastBookings.getFirst(), BookingDto.class));
+        for (ItemDtoWithBookings dto : dtos) {
+            List<BookingDto> itemLastBookings = lastBookings.stream()
+                    .filter(booking -> booking.getItem().getId().equals(dto.getId()))
+                    .sorted(Comparator.comparing(Booking::getEnd))
+                    .map(booking -> modelMapper.map(booking, BookingDto.class))
+                    .toList();
+            if (!itemLastBookings.isEmpty()) {
+                dto.setLastBooking(itemLastBookings.getFirst());
             }
 
-            List<Booking> nextBookings = bookingStorage.findNextBookings(item.getId(), now);
-            if (!nextBookings.isEmpty()) {
-                dtoWithBookings.setNextBooking(modelMapper.map(nextBookings.getFirst(), BookingDto.class));
+            List<BookingDto> itemNextBookings = nextBookings.stream()
+                    .filter(booking -> booking.getItem().getId().equals(dto.getId()))
+                    .sorted(Comparator.comparing(Booking::getStart))
+                    .map(booking -> modelMapper.map(booking, BookingDto.class))
+                    .toList();
+            if (!itemNextBookings.isEmpty()) {
+                dto.setNextBooking(itemNextBookings.getFirst());
             }
 
-            List<Comment> comments = commentStorage.findByItemId(dtoWithBookings.getId());
-            if (!comments.isEmpty()) {
-                List<CommentDto> commentDtos = new ArrayList<>();
-                for (Comment c : comments) {
-                    commentDtos.add(modelMapper.map(c, CommentDto.class));
-                }
-                dtoWithBookings.setComments(commentDtos);
+            List<CommentDto> itemComments = comments.stream()
+                    .filter(comment -> comment.getItem().getId().equals(dto.getId()))
+                    .map(comment -> modelMapper.map(comment, CommentDto.class))
+                    .toList();
+            if (!itemComments.isEmpty()) {
+                dto.setComments(itemComments);
             }
-
-            dtos.add(dtoWithBookings);
         }
 
         return dtos;
@@ -156,12 +172,9 @@ public class ItemServiceImpl implements ItemService {
             return List.of();
         }
 
-        List<Item> itemsFound = itemStorage.findByNameOrDescriptionContainingIgnoreCase(text).orElseThrow(
-                () -> new NotFoundException("По данному запросу не удалось что-либо найти :(")
-        );
+        List<Item> itemsFound = itemStorage.findByNameOrDescriptionContainingIgnoreCaseAndIsAvailable(text);
 
         return itemsFound.stream()
-                .filter(Item::getAvailable)
                 .map(item -> modelMapper.map(item, ItemDto.class))
                 .collect(Collectors.toList());
     }

@@ -52,7 +52,10 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto updateBookingStatus(long bookingId, boolean approved, long ownerId) {
-        Booking booking = bookingStorage.getReferenceById(bookingId);
+        Booking booking = bookingStorage.findById(bookingId).orElseThrow(
+                () -> new NotFoundException("Бронирование не найдено")
+        );
+
         if (!booking.getItem().getOwner().equals(ownerId)) {
             throw new ForbiddenException("Изменить статус бронирования может только владелец вещи");
         }
@@ -83,21 +86,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> findByStateForBooker(String state, long bookerId) {
+    public List<BookingDto> findByStateForBooker(State state, long bookerId) {
         if (!userStorage.existsById(bookerId)) {
             throw new NotFoundException("Пользователь не найден");
         }
 
-        State stateFromRequest;
-        try {
-            stateFromRequest = State.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Неверно указан параметр запроса");
-        }
-
         List<Booking> resultBooking = new ArrayList<>();
         LocalDateTime today = LocalDateTime.now();
-        switch (stateFromRequest) {
+        switch (state) {
             case ALL:
                 resultBooking.addAll(bookingStorage.findByBookerId(bookerId));
                 break;
@@ -126,51 +122,32 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> findByStateForOwner(String state, long ownerId) {
+    public List<BookingDto> findByStateForOwner(State state, long ownerId) {
         List<Long> itemIds = itemStorage.findItemIdByOwnerId(ownerId);
         if (itemIds.isEmpty()) {
             throw new NotFoundException("В сервис ещё не добавлено ни одной вещи к бронированию");
         }
 
-        State stateFromRequest;
-        try {
-            stateFromRequest = State.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Неверно указан параметр запроса");
-        }
-
         List<Booking> resultBooking = new ArrayList<>();
         LocalDateTime today = LocalDateTime.now();
-        switch (stateFromRequest) {
+        switch (state) {
             case ALL:
-                for (long itemId : itemIds) {
-                    resultBooking.addAll(bookingStorage.findByItemId(itemId));
-                }
+                resultBooking.addAll(bookingStorage.findByItemIds(itemIds));
                 break;
             case PAST:
-                for (long itemId : itemIds) {
-                    resultBooking.addAll(bookingStorage.findPastByItemId(itemId, today));
-                }
+                resultBooking.addAll(bookingStorage.findPastByItemIds(itemIds, today));
                 break;
             case CURRENT:
-                for (long itemId : itemIds) {
-                    resultBooking.add(bookingStorage.findCurrentByItemId(itemId, today));
-                }
+                resultBooking.add(bookingStorage.findCurrentByItemIds(itemIds, today));
                 break;
             case FUTURE:
-                for (long itemId : itemIds) {
-                    resultBooking.addAll(bookingStorage.findFutureByItemId(itemId, today));
-                }
+                resultBooking.addAll(bookingStorage.findFutureByItemIds(itemIds, today));
                 break;
             case WAITING:
-                for (long itemId : itemIds) {
-                    resultBooking.addAll(bookingStorage.findByStatusEqualsAndItemIdEqualsOrderByStartDesc(Status.WAITING, itemId));
-                }
+                resultBooking.addAll(bookingStorage.findByStatusEqualsAndItemIdInOrderByStartDesc(Status.WAITING, itemIds));
                 break;
             case REJECTED:
-                for (long itemId : itemIds) {
-                    resultBooking.addAll(bookingStorage.findByStatusEqualsAndItemIdEqualsOrderByStartDesc(Status.REJECTED, itemId));
-                }
+                resultBooking.addAll(bookingStorage.findByStatusEqualsAndItemIdInOrderByStartDesc(Status.REJECTED, itemIds));
                 break;
         }
 

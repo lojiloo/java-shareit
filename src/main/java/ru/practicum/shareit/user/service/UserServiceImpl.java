@@ -53,14 +53,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUserDtoById(long userId) {
+    public UserDto getUserById(long userId) {
         User user = userStorage.getReferenceById(userId);
 
         return modelMapper.map(user, UserDto.class);
     }
 
     @Override
-    public List<UserDto> getAllDtos() {
+    public List<UserDto> getAllUsers() {
         List<User> users = userStorage.findAll();
         List<UserDto> dtos = new ArrayList<>();
 

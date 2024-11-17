@@ -43,13 +43,13 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDtoWithBookings getItemDtoById(@PathVariable Long itemId) {
-        return itemService.getItemDtoById(itemId);
+    public ItemDtoWithBookings getItemById(@PathVariable Long itemId) {
+        return itemService.getItemById(itemId);
     }
 
     @GetMapping
-    public List<ItemDtoWithBookings> getAllItemsDtoOfUser(@RequestHeader("X-Sharer-User-Id") long ownerId) {
-        return itemService.getAllItemsDtoOfUser(ownerId);
+    public List<ItemDtoWithBookings> getAllItemsOfUser(@RequestHeader("X-Sharer-User-Id") long ownerId) {
+        return itemService.getAllItemsOfUser(ownerId);
     }
 
     @GetMapping("/search")
