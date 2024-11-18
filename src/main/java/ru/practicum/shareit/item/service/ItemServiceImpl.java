@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.service;
 
-import com.fasterxml.jackson.annotation.OptBoolean;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,9 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
