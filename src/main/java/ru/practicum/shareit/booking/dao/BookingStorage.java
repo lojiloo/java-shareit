@@ -7,6 +7,7 @@ import ru.practicum.shareit.booking.model.Status;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingStorage extends JpaRepository<Booking, Long> {
 
@@ -21,11 +22,13 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b.end from Booking b where (b.booker.id = :userId or b.item.owner = :userId) and b.item.id = :itemId")
     LocalDateTime findEndOfBookingByUserIdAndItemId(long userId, long itemId);
 
-    @Query("select b from Booking b where b.booker.id = :bookerId and b.end >= :today")
+    @Query("select b from Booking b where b.booker.id = :bookerId " +
+            "and (b.start <= :today and b.end >= :today)")
     List<Booking> findCurrentByBookerId(long bookerId, LocalDateTime today);
 
-    @Query("select b from Booking b where b.item.id in (:itemIds) and b.end >= :today")
-    Booking findCurrentByItemIds(List<Long> itemIds, LocalDateTime today);
+    @Query("select b from Booking b where b.item.id in (:itemIds) " +
+            "and (b.start <= :today and b.end >= :today)")
+    List<Booking> findCurrentByItemIds(List<Long> itemIds, LocalDateTime today);
 
     @Query("select b from Booking b where b.booker.id = :bookerId and b.end < :today")
     List<Booking> findPastByBookerId(long bookerId, LocalDateTime today);
@@ -46,10 +49,10 @@ public interface BookingStorage extends JpaRepository<Booking, Long> {
     @Query("select b.item.id from Booking b where b.id = :bookingId")
     Long findItemIdByBookingId(long bookingId);
 
-    @Query("select b from Booking b where b.item.id in (:itemIds) and b.start > :now order by b.start")
+    @Query("select b from Booking b where b.item.id in (:itemIds) and b.start > :now order by b.start limit 1")
     List<Booking> findNextBookings(List<Long> itemIds, LocalDateTime now);
 
-    @Query("select b from Booking b where b.item.id in (:itemIds) and b.end < :now order by b.end desc")
+    @Query("select b from Booking b where b.item.id in (:itemIds) and b.end < :now order by b.end desc limit 1")
     List<Booking> findLastBookings(List<Long> itemIds, LocalDateTime now);
 
 }

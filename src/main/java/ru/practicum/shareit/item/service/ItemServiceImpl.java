@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.service;
 
+import com.fasterxml.jackson.annotation.OptBoolean;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserStorage;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -126,9 +125,15 @@ public class ItemServiceImpl implements ItemService {
         }
         LocalDateTime now = LocalDateTime.now();
 
-        List<Booking> lastBookings = bookingStorage.findLastBookings(itemIds, now);
-        List<Booking> nextBookings = bookingStorage.findNextBookings(itemIds, now);
-        List<Comment> comments = commentStorage.findByItemIdIn(itemIds);
+        Map<Long, List<Booking>> lastBookings = bookingStorage.findLastBookings(itemIds, now)
+                .stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+        Map<Long, List<Booking>> nextBookings = bookingStorage.findNextBookings(itemIds, now)
+                .stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+        Map<Long, List<Comment>> comments = commentStorage.findByItemIdIn(itemIds)
+                .stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
 
         List<ItemDtoWithBookings> dtos = new ArrayList<>();
         for (Item item : items) {
@@ -136,29 +141,21 @@ public class ItemServiceImpl implements ItemService {
         }
 
         for (ItemDtoWithBookings dto : dtos) {
-            List<BookingDto> itemLastBookings = lastBookings.stream()
-                    .filter(booking -> booking.getItem().getId().equals(dto.getId()))
-                    .sorted(Comparator.comparing(Booking::getEnd))
-                    .map(booking -> modelMapper.map(booking, BookingDto.class))
-                    .toList();
-            if (!itemLastBookings.isEmpty()) {
-                dto.setLastBooking(itemLastBookings.getFirst());
+            long id = dto.getId();
+
+            if (lastBookings.containsKey(id)) {
+                dto.setLastBooking(modelMapper.map(lastBookings.get(id), BookingDto.class));
             }
 
-            List<BookingDto> itemNextBookings = nextBookings.stream()
-                    .filter(booking -> booking.getItem().getId().equals(dto.getId()))
-                    .sorted(Comparator.comparing(Booking::getStart))
-                    .map(booking -> modelMapper.map(booking, BookingDto.class))
-                    .toList();
-            if (!itemNextBookings.isEmpty()) {
-                dto.setNextBooking(itemNextBookings.getFirst());
+            if (nextBookings.containsKey(id)) {
+                dto.setNextBooking(modelMapper.map(nextBookings.get(id), BookingDto.class));
             }
 
-            List<CommentDto> itemComments = comments.stream()
-                    .filter(comment -> comment.getItem().getId().equals(dto.getId()))
-                    .map(comment -> modelMapper.map(comment, CommentDto.class))
-                    .toList();
-            if (!itemComments.isEmpty()) {
+            if (comments.containsKey(id)) {
+                List<CommentDto> itemComments = comments.get(id)
+                        .stream()
+                        .map(comment -> modelMapper.map(comment, CommentDto.class))
+                        .toList();
                 dto.setComments(itemComments);
             }
         }

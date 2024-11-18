@@ -138,7 +138,7 @@ public class BookingServiceImpl implements BookingService {
                 resultBooking.addAll(bookingStorage.findPastByItemIds(itemIds, today));
                 break;
             case CURRENT:
-                resultBooking.add(bookingStorage.findCurrentByItemIds(itemIds, today));
+                resultBooking.addAll(bookingStorage.findCurrentByItemIds(itemIds, today));
                 break;
             case FUTURE:
                 resultBooking.addAll(bookingStorage.findFutureByItemIds(itemIds, today));
