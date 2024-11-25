@@ -12,9 +12,6 @@ import ru.practicum.shareit.item.dto.CreateItem;
 import ru.practicum.shareit.item.dto.UpdateItem;
 import ru.practicum.shareit.item.dto.comment.CreateComment;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @Service

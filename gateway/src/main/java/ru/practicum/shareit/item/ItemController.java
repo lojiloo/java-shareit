@@ -12,7 +12,6 @@ import ru.practicum.shareit.item.dto.UpdateItem;
 import ru.practicum.shareit.item.dto.comment.CreateComment;
 
 import java.util.Collections;
-import java.util.List;
 
 @Controller
 @RequestMapping(path = "/items")
@@ -31,8 +30,8 @@ public class ItemController {
 
     @PostMapping("/{itemId}/comment")
     public ResponseEntity<Object> addNewComment(@RequestBody @Valid CreateComment request,
-                                    @PathVariable long itemId,
-                                    @RequestHeader("X-Sharer-User-Id") long userId) {
+                                                @PathVariable long itemId,
+                                                @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Поступил запрос от пользователя с id={} на добавление нового комментария на вещь с id={}", userId, itemId);
         return itemClient.addNewComment(request, itemId, userId);
     }
