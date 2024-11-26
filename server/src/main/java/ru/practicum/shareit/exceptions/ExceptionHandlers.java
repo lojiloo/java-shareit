@@ -33,4 +33,10 @@ public class ExceptionHandlers {
     public Map<String, String> handleConflict(final RuntimeException e) {
         return Map.of("Ошибка запроса: ", e.getMessage());
     }
+
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, Throwable> handleAnyOtherThrowable(final RuntimeException e) {
+        return Map.of("Внутренняя ошибка сервера: ", e.getCause());
+    }
 }

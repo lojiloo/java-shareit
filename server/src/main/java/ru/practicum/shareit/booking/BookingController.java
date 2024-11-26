@@ -52,16 +52,11 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> findByStateForOwner(@RequestParam(value = "state", defaultValue = "ALL") String state,
+    public List<BookingDto> findByStateForOwner(@RequestParam(value = "state", defaultValue = "ALL") String stateParam,
                                                 @RequestHeader("X-Sharer-User-Id") long ownerId) {
-        State stateFromRequest;
-        try {
-            stateFromRequest = State.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Неверно указан параметр запроса");
-        }
-
-        return bookingService.findByStateForOwner(stateFromRequest, ownerId);
+        State state = State.from(stateParam)
+                .orElseThrow(() -> new BadRequestException("Неверно указан параметр запроса"));
+        return bookingService.findByStateForOwner(state, ownerId);
     }
 
 }
