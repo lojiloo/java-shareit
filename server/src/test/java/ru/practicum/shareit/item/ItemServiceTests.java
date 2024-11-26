@@ -207,6 +207,30 @@ public class ItemServiceTests {
     }
 
     @Test
+    public void getItemByIdWithNonexistentItemTest() {
+        when(itemStorageMock.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.getItemById(1L));
+
+        verify(itemStorageMock, atLeast(1))
+                .findById(anyLong());
+        verifyNoMoreInteractions(itemStorageMock);
+    }
+
+    @Test
+    public void getAllItemsOfUserWhoHasNoItemsTest() {
+        when(itemStorageMock.findByOwner(anyLong()))
+                .thenReturn(List.of());
+
+        assertThrows(NotFoundException.class, () -> service.getAllItemsOfUser(1L));
+
+        verify(itemStorageMock, atLeast(1))
+                .findByOwner(anyLong());
+        verifyNoMoreInteractions(itemStorageMock);
+    }
+
+    @Test
     public void searchItemTest() {
         Item item = mapper.map(createItem("Blue Apple"), Item.class);
         String text = "apple";

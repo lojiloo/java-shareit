@@ -42,6 +42,8 @@ public class ItemServiceIntegrationTests {
 
         UpdateItemDto request = new UpdateItemDto();
         request.setName("Czech knedlik");
+        request.setDescription("Booked");
+        request.setAvailable(false);
 
         ItemDto dtoUpd = itemService.updateItem(request, dto.getId(), user.getId());
 
