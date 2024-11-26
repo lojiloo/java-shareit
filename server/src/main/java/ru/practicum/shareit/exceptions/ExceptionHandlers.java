@@ -42,8 +42,8 @@ public class ExceptionHandlers {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleThrowable(final Throwable e) {
+    public Map<Throwable, String> handleThrowable(final Throwable e) {
         log.info("Status 500: {}", e.getMessage());
-        return Map.of("Внутренняя ошибка сервера: ", e.getMessage());
+        return Map.of(e.getCause(), e.getMessage());
     }
 }
